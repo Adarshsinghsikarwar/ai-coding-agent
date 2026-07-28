@@ -31,7 +31,7 @@ except ImportError:
 
 from .tools import RepoTools, TOOL_SCHEMAS
 
-MODEL = os.environ.get("AGENT_MODEL", "mistral-small-latest")
+MODEL = os.environ.get("AGENT_MODEL", "mistral-large-latest")
 MAX_TURNS = 25  # safety valve per phase, to avoid infinite tool-call loops
 MAX_RATE_LIMIT_RETRIES = 6
 RATE_LIMIT_BASE_DELAY_SECONDS = 5  # doubles each retry: 5s, 10s, 20s, 40s...

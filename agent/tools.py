@@ -76,7 +76,7 @@ class RepoTools:
             return f"ERROR: file not found: {path}"
         if not target.is_file():
             return f"ERROR: not a file: {path}"
-        text = target.read_text(errors="replace")
+        text = target.read_text(encoding="utf-8", errors="replace")
         numbered = "\n".join(f"{i+1:>5}\t{line}" for i, line in enumerate(text.splitlines()))
         return numbered or "(empty file)"
 
@@ -94,7 +94,7 @@ class RepoTools:
             if any(part in IGNORE_DIRS for part in file_path.parts):
                 continue
             try:
-                text = file_path.read_text(errors="ignore")
+                text = file_path.read_text(encoding="utf-8", errors="ignore")
             except Exception:
                 continue
             for i, line in enumerate(text.splitlines(), start=1):
@@ -113,7 +113,7 @@ class RepoTools:
         """Create a new file or fully overwrite an existing one."""
         target = self._resolve(path)
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(content)
+        target.write_text(content, encoding="utf-8")
         return f"OK: wrote {len(content)} bytes to {path}"
 
     def edit_file(self, path: str, old_str: str, new_str: str) -> str:
@@ -121,14 +121,14 @@ class RepoTools:
         target = self._resolve(path)
         if not target.exists():
             return f"ERROR: file not found: {path}"
-        text = target.read_text()
+        text = target.read_text(encoding="utf-8")
         count = text.count(old_str)
         if count == 0:
             return f"ERROR: old_str not found in {path}. Nothing changed."
         if count > 1:
             return f"ERROR: old_str matches {count} locations in {path}; " \
                    f"make old_str more specific (include more surrounding context)."
-        target.write_text(text.replace(old_str, new_str, 1))
+        target.write_text(text.replace(old_str, new_str, 1), encoding="utf-8")
         return f"OK: applied edit to {path}"
 
     # ---------- read-only git tool ----------

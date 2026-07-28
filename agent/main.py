@@ -33,7 +33,10 @@ DEFAULT_REQUEST = "Improve the application so users can better organise and sear
 def _write_artifact(repo_root: str, filename: str, content: str) -> None:
     out_dir = Path(repo_root) / "agent_artifacts"
     out_dir.mkdir(exist_ok=True)
-    (out_dir / filename).write_text(content)
+    # Force UTF-8 explicitly - on Windows, write_text() without this defaults
+    # to the system codepage (often cp1252), which crashes on unicode
+    # characters the model may output (em-dashes, minus signs, etc.).
+    (out_dir / filename).write_text(content, encoding="utf-8")
 
 
 def main():
