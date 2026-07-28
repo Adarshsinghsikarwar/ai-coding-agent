@@ -7,7 +7,7 @@ reading, searching, path-traversal sandboxing) works before you spend
 API credits on a full agent run.
 
 Usage:
-    python verify_setup.py --repo ./note-app
+    python verify_setup.py --repo ./target_repo
 """
 
 import argparse
@@ -16,7 +16,7 @@ from agent.tools import RepoTools
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--repo", default="./note-app")
+    parser.add_argument("--repo", default="./target_repo")
     args = parser.parse_args()
 
     tools = RepoTools(args.repo)
@@ -38,7 +38,7 @@ def main():
         print(f"   OK, blocked: {e}")
 
     print("\nAll good. Tool layer is working. You can now run the full agent:")
-    print('  python -m agent.main --repo ./note-app --request "..."')
+    print('  python -m agent.main --repo ./target_repo --request "..."')
 
 
 if __name__ == "__main__":

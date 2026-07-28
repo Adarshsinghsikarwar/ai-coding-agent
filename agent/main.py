@@ -42,8 +42,8 @@ def main():
     parser.add_argument("--request", default=DEFAULT_REQUEST, help="Product request (one line)")
     args = parser.parse_args()
 
-    if "ANTHROPIC_API_KEY" not in os.environ:
-        raise SystemExit("Set ANTHROPIC_API_KEY in your environment first.")
+    if "MISTRAL_API_KEY" not in os.environ:
+        raise SystemExit("Set MISTRAL_API_KEY in your environment first.")
 
     agent = Agent(repo_root=args.repo)
     started = datetime.now(timezone.utc).isoformat()
@@ -77,14 +77,23 @@ def main():
 
     # ---------- Phase 3: Implement ----------
     print("\n=== PHASE 3/4: IMPLEMENT ===")
+    implement_max_turns = int(os.environ.get("AGENT_IMPLEMENT_MAX_TURNS", "45"))
     implementation_log = agent.run_phase(
         system_prompt=IMPLEMENT_SYSTEM_PROMPT,
         user_message=(
             f"Here is the approved plan. Implement it now using your file tools.\n\n{plan}"
         ),
+        max_turns=implement_max_turns,
     )
     _write_artifact(args.repo, "03_implementation_log.md", implementation_log)
     print(implementation_log)
+    if implementation_log.startswith("ERROR: hit MAX_TURNS"):
+        print(
+            "\n[WARNING] Implement phase hit its turn limit before finishing. "
+            "Some file changes may be partial or missing - check "
+            "`git diff` inside the repo, and see agent_artifacts/03_implementation_log.md "
+            "for what it was doing when it ran out of turns.\n"
+        )
 
     # ---------- Phase 4: Summarize ----------
     print("\n=== PHASE 4/4: SUMMARIZE ===")

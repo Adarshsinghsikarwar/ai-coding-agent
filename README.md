@@ -2,7 +2,7 @@
 
 An AI agent that explores an unfamiliar repository, decides on a reasonable
 product implementation for an under-specified request, and modifies the
-codebase itself — using Claude's tool-use (function calling) in a fully
+codebase itself — using Mistral AI's tool-use (function calling) in a fully
 custom, framework-free agent loop.
 
 Target repo: [`callicoder/node-easy-notes-app`](https://github.com/callicoder/node-easy-notes-app)
@@ -29,8 +29,9 @@ ai-coding-agent/
 ```
 
 **Design principle:** no LangChain / AutoGPT / CrewAI. The whole agent is
-~150 lines of plain Python calling the Anthropic Messages API directly with
-`tools=[...]`. For an assignment like this, a framework hides exactly the
+~150 lines of plain Python calling Mistral's `chat.complete()` directly
+with `tools=[...]` (OpenAI-style function calling, which Mistral's API also
+implements). For an assignment like this, a framework hides exactly the
 part that's being evaluated (the loop, the tool dispatch, the prompt
 design), so I built it raw — it's also easier to explain line-by-line in
 an interview.
@@ -39,10 +40,11 @@ an interview.
 
 One reusable method, `Agent.run_phase(system_prompt, user_message, allow_tools)`:
 
-1. Send `messages` + `tools` (Anthropic tool schemas) to Claude.
-2. If the response contains `tool_use` blocks → execute each one locally
-   against `RepoTools`, append the `tool_result`s to the conversation, and
-   loop back to step 1.
+1. Send `messages` + `tools` (OpenAI-style function schemas) to Mistral's
+   `chat.complete()`.
+2. If the response contains `tool_calls` → execute each one locally against
+   `RepoTools`, append the results as `role="tool"` messages, and loop back
+   to step 1.
 3. If the response is plain text (no tool calls) → that's the phase's final
    answer; return it.
 4. A `MAX_TURNS = 25` safety valve prevents infinite tool-call loops.
@@ -182,7 +184,7 @@ repo already.
 ```bash
 git clone https://github.com/callicoder/node-easy-notes-app.git target_repo
 pip install -r requirements.txt
-export ANTHROPIC_API_KEY=sk-ant-...
+export MISTRAL_API_KEY=...   # get one free at console.mistral.ai
 
 # Optional, zero-cost check that the tool layer itself works:
 python verify_setup.py --repo ./target_repo
@@ -191,6 +193,10 @@ python verify_setup.py --repo ./target_repo
 python -m agent.main --repo ./target_repo \
   --request "Improve the application so users can better organise and search their notes."
 ```
+
+Model used by default is `mistral-large-latest` (supports function/tool
+calling); override with `AGENT_MODEL=...` if you want to point at a
+different Mistral model.
 
 Output:
 - Live console log of every phase and every tool call (`[tool] read_file(...)`, etc.)

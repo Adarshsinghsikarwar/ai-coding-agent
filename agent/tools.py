@@ -145,76 +145,96 @@ class RepoTools:
         return (result.stdout or result.stderr or "(no output)")[:8000]
 
 
-# ---------- Anthropic tool schema (function-calling definitions) ----------
+# ---------- Mistral tool schema (OpenAI-style function-calling definitions) ----------
+# Mistral's chat.complete(tools=...) expects: {"type": "function", "function": {name, description, parameters}}
+# (same shape as OpenAI function calling - Anthropic's {name, description, input_schema} shape doesn't apply here).
 
 TOOL_SCHEMAS = [
     {
-        "name": "list_directory",
-        "description": "List files and folders under a path in the repo, recursively (skips node_modules/.git). Use '.' for repo root.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "path": {"type": "string", "description": "Relative path, default '.'"},
-                "max_depth": {"type": "integer", "description": "Max recursion depth, default 3"},
+        "type": "function",
+        "function": {
+            "name": "list_directory",
+            "description": "List files and folders under a path in the repo, recursively (skips node_modules/.git). Use '.' for repo root.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Relative path, default '.'"},
+                    "max_depth": {"type": "integer", "description": "Max recursion depth, default 3"},
+                },
             },
         },
     },
     {
-        "name": "read_file",
-        "description": "Read the full contents of a file (with line numbers) at a path relative to the repo root.",
-        "input_schema": {
-            "type": "object",
-            "properties": {"path": {"type": "string"}},
-            "required": ["path"],
+        "type": "function",
+        "function": {
+            "name": "read_file",
+            "description": "Read the full contents of a file (with line numbers) at a path relative to the repo root.",
+            "parameters": {
+                "type": "object",
+                "properties": {"path": {"type": "string"}},
+                "required": ["path"],
+            },
         },
     },
     {
-        "name": "search_files",
-        "description": "Regex search across repo files (like grep -r). Use to find where a symbol/route/model is defined or used.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "pattern": {"type": "string", "description": "Regex pattern"},
-                "glob": {"type": "string", "description": "Glob to restrict search, e.g. '**/*.js'. Default '**/*'"},
+        "type": "function",
+        "function": {
+            "name": "search_files",
+            "description": "Regex search across repo files (like grep -r). Use to find where a symbol/route/model is defined or used.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "pattern": {"type": "string", "description": "Regex pattern"},
+                    "glob": {"type": "string", "description": "Glob to restrict search, e.g. '**/*.js'. Default '**/*'"},
+                },
+                "required": ["pattern"],
             },
-            "required": ["pattern"],
         },
     },
     {
-        "name": "write_file",
-        "description": "Create a new file, or completely overwrite an existing file, with the given content.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "path": {"type": "string"},
-                "content": {"type": "string"},
+        "type": "function",
+        "function": {
+            "name": "write_file",
+            "description": "Create a new file, or completely overwrite an existing file, with the given content.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string"},
+                    "content": {"type": "string"},
+                },
+                "required": ["path", "content"],
             },
-            "required": ["path", "content"],
         },
     },
     {
-        "name": "edit_file",
-        "description": "Surgically replace one exact snippet (old_str) with new_str inside an existing file. old_str must match exactly once - include enough surrounding context to make it unique.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "path": {"type": "string"},
-                "old_str": {"type": "string"},
-                "new_str": {"type": "string"},
+        "type": "function",
+        "function": {
+            "name": "edit_file",
+            "description": "Surgically replace one exact snippet (old_str) with new_str inside an existing file. old_str must match exactly once - include enough surrounding context to make it unique.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string"},
+                    "old_str": {"type": "string"},
+                    "new_str": {"type": "string"},
+                },
+                "required": ["path", "old_str", "new_str"],
             },
-            "required": ["path", "old_str", "new_str"],
         },
     },
     {
-        "name": "git",
-        "description": "Run a read-only git command inside the repo, e.g. subcommand='diff' to review your own changes so far.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "subcommand": {"type": "string", "description": "one of: status, diff, log, show, branch"},
-                "args": {"type": "string", "description": "extra args, e.g. '--stat'"},
+        "type": "function",
+        "function": {
+            "name": "git",
+            "description": "Run a read-only git command inside the repo, e.g. subcommand='diff' to review your own changes so far.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "subcommand": {"type": "string", "description": "one of: status, diff, log, show, branch"},
+                    "args": {"type": "string", "description": "extra args, e.g. '--stat'"},
+                },
+                "required": ["subcommand"],
             },
-            "required": ["subcommand"],
         },
     },
 ]
